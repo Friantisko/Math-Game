@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Speed Multiplication</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Auth Section */
+    .auth-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .tab-btn:hover {
+      border-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #333;
+      background: white;
+      transition: border 0.3s;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder,
+    input[type="number"]::placeholder {
+      color: #999;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .error {
+      background: #fee;
+      color: #c00;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: none;
+      border-left: 4px solid #c00;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    /* Gamemode Selection */
+    .gamemode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .gamemode-card {
+      padding: 30px;
+      border: 3px solid #ddd;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: white;
+      color: #333;
+    }
+
+    .gamemode-card:hover {
+      border-color: #667eea;
+      transform: translateY(-5px);
+    }
+
+    .gamemode-card.selected {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .gamemode-title {
+      font-size: 1.5em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .gamemode-desc {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+
+    .gamemode-card.selected .gamemode-desc {
+      opacity: 0.9;
+    }
+
+    /* Game Area */
+    .current-user {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: #f5f5f5;
+      color: #333;
+      border: 2px solid #ddd;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .logout-btn:hover {
+      background: #e8e8e8;
+    }
+
+    .countdown {
+      font-size: 4em;
+      text-align: center;
+      color: #667eea;
+      font-weight: 700;
+      margin: 40px 0;
+      animation: pulse 1s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .game-container {
+      text-align: center;
+    }
+
+    #currentQuestion {
+      font-size: 3.5em;
+      font-weight: 700;
+      color: #667eea;
+      margin: 30px 0;
+      font-family: 'Courier New', monospace;
+    }
+
+    #answerInput {
+      font-size: 2em;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 30px;
+      border: 3px solid #ddd;
+      color: #333;
+      background: white;
+      border-radius: 8px;
+      /* prevent any native spinner/drag affordance from ever appearing */
+      -moz-appearance: textfield;
+    }
+
+    #answerInput::-webkit-outer-spin-button,
+    #answerInput::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    #answerInput::placeholder {
+      color: #999;
+    }
+
+    #answerInput:focus {
+      border-color: #667eea;
+      outline: none;
+    }
+
+    .next-question {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    .next-question-text {
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    #nextQuestion {
+      font-size: 1.5em;
+      color: #667eea;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      background: #f0f0f0;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      color: #333;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #667eea;
+      font-family: 'Courier New', monospace;
+    }
+
+    .timer {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+
+    /* Leaderboard */
+    .leaderboard-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .leaderboard-tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: #f0f0f0;
+      border: 2px solid #ddd;
+      color: #333;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .leaderboard-tab-btn:hover {
+      border-color: #667eea;
+    }
+
+    .leaderboard-tab-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .leaderboard-list {
+      list-style: none;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+      color: #333;
+    }
+
+    .leaderboard-rank {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: #667eea;
+      margin-right: 15px;
+      min-width: 40px;
+    }
+
+    .leaderboard-rank.gold {
+      color: #ffd700;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .leaderboard-rank.silver {
+      color: #c0c0c0;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .leaderboard-rank.bronze {
+      color: #cd7f32;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .leaderboard-info {
+      flex: 1;
+    }
+
+    .leaderboard-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 3px;
+    }
+
+    .leaderboard-stats {
+      font-size: 0.85em;
+      color: #666;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .game-over-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .game-over-modal.show {
+      display: flex;
+    }
+
+    .game-over-content {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .game-over-content h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 2em;
+    }
+
+    .game-over-stats {
+      background: #f0f0f0;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+
+    .game-over-stat {
+      margin: 10px 0;
+      font-size: 1.1em;
+      color: #333;
+    }
+
+    .game-over-stat-label {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .game-over-stat-value {
+      color: #667eea;
+      font-weight: 700;
+      font-size: 1.3em;
+    }
+
+    .game-over-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .game-over-buttons button {
+      flex: 1;
+    }
+
+    .back-btn {
+      background: #f5f5f5;
+      color: #333;
+      border: 2px solid #ddd;
+      margin-top: 10px;
+    }
+
+    .back-btn:hover {
+      background: #e8e8e8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ Speed Multiplication</h1>
+
+    <!-- Auth Section -->
+    <div id="authSection" class="section active">
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchAuthTab('register')">Register</button>
+      </div>
+
+      <div id="errorMsg" class="error"></div>
+
+      <!-- Login Tab -->
+      <div id="loginTab" class="tab-content active">
+        <div class="form-group">
+          <label for="loginUsername">Username:</label>
+          <input type="text" id="loginUsername" placeholder="your_username">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password:</label>
+          <input type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button onclick="loginUser()">Login</button>
+      </div>
+
+      <!-- Register Tab -->
+      <div id="registerTab" class="tab-content">
+        <div class="form-group">
+          <label for="regUsername">Username:</label>
+          <input type="text" id="regUsername" placeholder="your_username">
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password:</label>
+          <input type="password" id="regPassword" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label for="regPasswordConfirm">Confirm Password:</label>
+          <input type="password" id="regPasswordConfirm" placeholder="••••••••">
+        </div>
+        <button onclick="registerUser()">Create Account</button>
+      </div>
+    </div>
+
+    <!-- Gamemode Section -->
+    <div id="gamemodeSection" class="section">
+      <div class="current-user">
+        Logged in as: <strong id="currentUsername"></strong>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+
+      <h2 style="text-align: center; margin-bottom: 20px;">Select Gamemode</h2>
+      <div class="gamemode-grid">
+        <div class="gamemode-card" onclick="selectGamemode('10')">
+          <div class="gamemode-title">🚀 10</div>
+          <div class="gamemode-desc">10 multiplications<br>Fastest time wins</div>
+        </div>
+        <div class="gamemode-card" onclick="selectGamemode('30')">
+          <div class="gamemode-title">⚡ 30</div>
+          <div class="gamemode-desc">30 multiplications<br>Fastest time wins</div>
+        </div>
+        <div class="gamemode-card" onclick="selectGamemode('1min')">
+          <div class="gamemode-title">💪 1 MIN</div>
+          <div class="gamemode-desc">1 minute<br>Most multiplications</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h2 style="text-align: center; margin-bottom: 20px;">🏆 Leaderboards</h2>
+        
+        <div class="leaderboard-tabs">
+          <button class="leaderboard-tab-btn active" onclick="switchLeaderboard('10')">10x</button>
+          <button class="leaderboard-tab-btn" onclick="switchLeaderboard('30')">30x</button>
+          <button class="leaderboard-tab-btn" onclick="switchLeaderboard('1min')">1 Min</button>
+        </div>
+
+        <div id="leaderboard10" class="leaderboard-content">
+          <ol class="leaderboard-list" id="leaderboardList10"><li class="loading">Loading...</li></ol>
+        </div>
+        <div id="leaderboard30" class="leaderboard-content" style="display: none;">
+          <ol class="leaderboard-list" id="leaderboardList30"><li class="loading">Loading...</li></ol>
+        </div>
+        <div id="leaderboard1min" class="leaderboard-content" style="display: none;">
+          <ol class="leaderboard-list" id="leaderboardList1min"><li class="loading">Loading...</li></ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Section -->
+    <div id="gameSection" class="section">
+      <div class="current-user">
+        <strong id="gamemodeDisplay"></strong>
+      </div>
+      
+      <div id="countdownContainer" style="display: none;">
+        <div class="countdown" id="countdown"></div>
+      </div>
+
+      <div id="gameContainer" style="display: none;" class="game-container">
+        <div class="timer" id="timer"></div>
+        
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Correct</div>
+            <div class="stat-value" id="correctCount">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Avg Speed</div>
+            <div class="stat-value" id="avgSpeed">-</div>
+          </div>
+        </div>
+
+        <div id="currentQuestion">5 × 7 = ?</div>
+
+        <!-- type changed from "number" to "text" + inputmode="numeric":
+             a native number input lets the mouse-drag the spinner arrows
+             or scroll-wheel-while-focused to change the value. Text+numeric
+             keeps the numeric keyboard on mobile with none of that. -->
+        <input
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          id="answerInput"
+          placeholder="Type answer..."
+        >
+
+        <div class="next-question">
+          <div class="next-question-text">Next:</div>
+          <div id="nextQuestion">Coming next...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="gameOverModal" class="game-over-modal">
+    <div class="game-over-content">
+      <h2>🎉 Game Over!</h2>
+      <div class="game-over-stats">
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Score:</span>
+          <span class="game-over-stat-value" id="finalScore">0</span>
+        </div>
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Time Taken:</span>
+          <span class="game-over-stat-value" id="finalTime">0s</span>
+        </div>
+        <div class="game-over-stat">
+          <span class="game-over-stat-label">Avg Speed:</span>
+          <span class="game-over-stat-value" id="finalAvgSpeed">0ms</span>
+        </div>
+      </div>
+      <button onclick="backToGamemode()">Play Again</button>
+      <button class="back-btn" onclick="backToMenu()">Back to Menu</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== SUPABASE CONFIG =====
+    const SUPABASE_URL = 'https://bmnyxnqgnjimwmfowoju.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_75tPeVwVLzzGjyXefSgfzQ_BG7tXnbF';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ===== STATE =====
+    let currentUser = null;
+    let currentGamemode = null;
+    let gameState = {
+      isRunning: false,
+      startTime: 0,
+      correctAnswers: 0,
+      answeredQuestions: [],
+      currentNum1: 0,
+      currentNum2: 0,
+      nextNum1: 0,
+      nextNum2: 0
+    };
+
+    // ===== AUTH FUNCTIONS =====
+    function showError(msg) {
+      const errorEl = document.getElementById('errorMsg');
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+      setTimeout(() => errorEl.classList.remove('show'), 5000);
+    }
+
+    function switchAuthTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').classList.add('active');
+    }
+
+    async function loginUser() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!username || !password) {
+        showError('Please fill in all fields');
+        return;
+      }
+
+      try {
+        const passwordHash = btoa(password);
+        const { data, error } = await supabaseClient
+          .from('users')
+          .select('*')
+          .eq('username', username)
+          .eq('password_hash', passwordHash)
+          .single();
+
+        if (error || !data) {
+          showError('Invalid username or password');
+          return;
+        }
+
+        currentUser = data;
+        document.getElementById('currentUsername').textContent = data.username;
+        showGamemodeSection();
+        loadAllLeaderboards();
+      } catch (err) {
+        showError('Login failed: ' + err.message);
+      }
+    }
+
+    async function registerUser() {
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+
+      if (!username || !password) {
+        showError('Please fill in all fields');
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        showError('Passwords do not match');
+        return;
+      }
+
+      if (password.length < 4) {
+        showError('Password must be at least 4 characters');
+        return;
+      }
+
+      try {
+        const passwordHash = btoa(password);
+
+        // Insert user without .single()
+        const { data: insertData, error: insertError } = await supabaseClient
+          .from('users')
+          .insert([{
+            username,
+            password_hash: passwordHash
+          }])
+          .select();
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          if (insertError.message.includes('duplicate')) {
+            showError('Username already exists. Please choose a different one.');
+          } else {
+            showError('Registration failed: ' + insertError.message);
+          }
+          return;
+        }
+
+        if (!insertData || insertData.length === 0) {
+          showError('Registration failed: No data returned');
+          return;
+        }
+
+        // Now query to get the full user data
+        const { data: userData, error: queryError } = await supabaseClient
+          .from('users')
+          .select('*')
+          .eq('username', username)
+          .single();
+
+        if (queryError || !userData) {
+          showError('User created but could not retrieve data');
+          return;
+        }
+
+        currentUser = userData;
+        document.getElementById('currentUsername').textContent = userData.username;
+        showGamemodeSection();
+        loadAllLeaderboards();
+      } catch (err) {
+        showError('Registration failed: ' + err.message);
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      currentGamemode = null;
+      gameState = {
+        isRunning: false,
+        startTime: 0,
+        correctAnswers: 0,
+        answeredQuestions: [],
+        currentNum1: 0,
+        currentNum2: 0,
+        nextNum1: 0,
+        nextNum2: 0
+      };
+      showAuthSection();
+    }
+
+    // ===== SECTION NAVIGATION =====
+    function showAuthSection() {
+      hideAllSections();
+      document.getElementById('authSection').classList.add('active');
+    }
+
+    function showGamemodeSection() {
+      hideAllSections();
+      document.getElementById('gamemodeSection').classList.add('active');
+    }
+
+    function showGameSection() {
+      hideAllSections();
+      document.getElementById('gameSection').classList.add('active');
+    }
+
+    function hideAllSections() {
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+    }
+
+    // ===== GAMEMODE SELECTION =====
+    function selectGamemode(mode) {
+      document.querySelectorAll('.gamemode-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      event.target.closest('.gamemode-card').classList.add('selected');
+      
+      currentGamemode = mode;
+      
+      const modeText = mode === '10' ? '10 Multiplications' : mode === '30' ? '30 Multiplications' : '1 Minute';
+      document.getElementById('gamemodeDisplay').textContent = '📍 ' + modeText;
+      
+      startGameSequence();
+    }
+
+    // ===== COUNTDOWN & GAME START =====
+    async function startGameSequence() {
+      showGameSection();
+      
+      document.getElementById('countdownContainer').style.display = 'block';
+      document.getElementById('gameContainer').style.display = 'none';
+
+      // 3-2-1 Countdown
+      for (let i = 3; i > 0; i--) {
+        document.getElementById('countdown').textContent = i;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Start game
+      document.getElementById('countdownContainer').style.display = 'none';
+      document.getElementById('gameContainer').style.display = 'block';
+
+      gameState.isRunning = true;
+      gameState.startTime = performance.now();
+      gameState.correctAnswers = 0;
+      gameState.answeredQuestions = [];
+
+      generateQuestion();
+      generateNextQuestion();
+      updateDisplay();
+
+      const answerInput = document.getElementById('answerInput');
+      answerInput.value = '';
+      answerInput.focus();
+
+      // Fix: advance the instant the typed value matches the correct
+      // answer — no Enter key needed anymore.
+      answerInput.addEventListener('input', handleAnswerInput);
+      // Fix: Space bar always wipes the box instead of typing a space.
+      answerInput.addEventListener('keydown', handleAnswerKeydown);
+
+      // Timer
+      if (currentGamemode === '1min') {
+        startTimer();
+      } else {
+        updateTimer();
+      }
+    }
+
+    // ===== GAME LOGIC =====
+    function generateQuestion() {
+      gameState.currentNum1 = Math.floor(Math.random() * 10) + 2;
+      gameState.currentNum2 = Math.floor(Math.random() * 10) + 2;
+    }
+
+    function generateNextQuestion() {
+      gameState.nextNum1 = Math.floor(Math.random() * 10) + 2;
+      gameState.nextNum2 = Math.floor(Math.random() * 10) + 2;
+    }
+
+    function updateDisplay() {
+      document.getElementById('currentQuestion').textContent = 
+        `${gameState.currentNum1} × ${gameState.currentNum2} = ?`;
+      document.getElementById('nextQuestion').textContent = 
+        `${gameState.nextNum1} × ${gameState.nextNum2}`;
+      document.getElementById('correctCount').textContent = gameState.correctAnswers;
+      
+      if (gameState.answeredQuestions.length > 0) {
+        const avgSpeed = gameState.answeredQuestions.reduce((a, b) => a + b, 0) / gameState.answeredQuestions.length;
+        document.getElementById('avgSpeed').textContent = avgSpeed.toFixed(0) + 'ms';
+      }
+    }
+
+    // Space bar clears the answer box instead of inserting a space.
+    function handleAnswerKeydown(event) {
+      if (event.code === 'Space' || event.key === ' ') {
+        event.preventDefault();
+        event.target.value = '';
+      }
+    }
+
+    // Fires on every keystroke. As soon as the typed value equals the
+    // correct product, the question advances immediately — Enter is
+    // no longer required.
+    function handleAnswerInput(event) {
+      if (!gameState.isRunning) return;
+
+      const raw = event.target.value;
+      if (raw === '') return;
+
+      const answer = parseInt(raw, 10);
+      if (isNaN(answer)) return;
+
+      const correct = gameState.currentNum1 * gameState.currentNum2;
+      if (answer !== correct) return;
+
+      const answerTime = performance.now() - gameState.startTime;
+      const questionTime = gameState.answeredQuestions.length > 0
+        ? answerTime - gameState.answeredQuestions.reduce((a, b) => a + b, 0)
+        : answerTime;
+
+      gameState.answeredQuestions.push(questionTime);
+      gameState.correctAnswers++;
+
+      event.target.value = '';
+
+      // Check if game should end
+      if ((currentGamemode === '10' && gameState.correctAnswers >= 10) ||
+          (currentGamemode === '30' && gameState.correctAnswers >= 30)) {
+        endGame();
+        return;
+      }
+
+      // Next question
+      gameState.currentNum1 = gameState.nextNum1;
+      gameState.currentNum2 = gameState.nextNum2;
+      generateNextQuestion();
+      updateDisplay();
+    }
+
+    let timerInterval;
+    let gameStartTime;
+
+    function startTimer() {
+      gameStartTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - gameStartTime) / 1000;
+        const remaining = Math.max(0, 60 - elapsed);
+        document.getElementById('timer').textContent = remaining.toFixed(1) + 's';
+
+        if (remaining <= 0) {
+          endGame();
+        }
+      }, 10);
+    }
+
+    function updateTimer() {
+      const elapsed = (performance.now() - gameState.startTime) / 1000;
+      document.getElementById('timer').textContent = elapsed.toFixed(3) + 's';
+      
+      if (gameState.isRunning) {
+        requestAnimationFrame(updateTimer);
+      }
+    }
+
+    // ===== GAME END =====
+    async function endGame() {
+      gameState.isRunning = false;
+      clearInterval(timerInterval);
+
+      const answerInput = document.getElementById('answerInput');
+      answerInput.removeEventListener('input', handleAnswerInput);
+      answerInput.removeEventListener('keydown', handleAnswerKeydown);
+
+      const totalTime = performance.now() - gameState.startTime;
+      const avgSpeed = gameState.answeredQuestions.reduce((a, b) => a + b, 0) / gameState.answeredQuestions.length;
+
+      // Save score
+      try {
+        await supabaseClient.from('scores').insert([{
+          user_id: currentUser.id,
+          gamemode: currentGamemode,
+          score: gameState.correctAnswers,
+          time_taken_ms: totalTime,
+          avg_time_per_answer_ms: avgSpeed
+        }]);
+      } catch (err) {
+        console.error('Failed to save score:', err);
+      }
+
+      // Show game over modal
+      document.getElementById('finalScore').textContent = gameState.correctAnswers;
+      document.getElementById('finalTime').textContent = (totalTime / 1000).toFixed(3) + 's';
+      document.getElementById('finalAvgSpeed').textContent = avgSpeed.toFixed(1) + 'ms';
+      document.getElementById('gameOverModal').classList.add('show');
+    }
+
+    function backToGamemode() {
+      document.getElementById('gameOverModal').classList.remove('show');
+      showGamemodeSection();
+      loadAllLeaderboards();
+    }
+
+    function backToMenu() {
+      document.getElementById('gameOverModal').classList.remove('show');
+      logout();
+    }
+
+    // ===== LEADERBOARD =====
+    function switchLeaderboard(mode) {
+      document.querySelectorAll('.leaderboard-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      document.querySelectorAll('.leaderboard-content').forEach(content => {
+        content.style.display = 'none';
+      });
+      document.getElementById('leaderboard' + mode).style.display = 'block';
+    }
+
+    async function loadAllLeaderboards() {
+      loadLeaderboard('10');
+      loadLeaderboard('30');
+      loadLeaderboard('1min');
+    }
+
+    async function loadLeaderboard(gamemode) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('scores')
+          .select('score, avg_time_per_answer_ms, users(username)')
+          .eq('gamemode', gamemode)
+          .order('score', { ascending: false })
+          .limit(30);
+
+        if (error) throw error;
+
+        const listId = 'leaderboardList' + gamemode;
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+
+        if (!data || data.length === 0) {
+          const li = document.createElement('li');
+          li.className = 'loading';
+          li.textContent = 'No scores yet. Be the first!';
+          list.appendChild(li);
+          return;
+        }
+
+        const seen = {};
+        let rank = 0;
+        data.forEach((row, index) => {
+          const username = row.users?.username || 'Player';
+          const key = username + ':' + row.score;
+          
+          if (!seen[key]) {
+            rank++;
+            seen[key] = true;
+
+            const li = document.createElement('li');
+            li.className = 'leaderboard-item';
+            
+            let rankClass = '';
+            if (rank === 1) rankClass = ' gold';
+            else if (rank === 2) rankClass = ' silver';
+            else if (rank === 3) rankClass = ' bronze';
+
+            li.innerHTML = `
+              <div class="leaderboard-rank${rankClass}">${rank}</div>
+              <div class="leaderboard-info">
+                <div class="leaderboard-name">${username}</div>
+                <div class="leaderboard-stats">Score: ${row.score} | Avg: ${row.avg_time_per_answer_ms.toFixed(1)}ms</div>
+              </div>
+            `;
+            list.appendChild(li);
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load leaderboard:', err);
+        const listId = 'leaderboardList' + gamemode;
+        const list = document.getElementById(listId);
+        list.innerHTML = '<li class="loading">Error loading leaderboard</li>';
+      }
+    }
+  </script>
+</body>
+</html>
