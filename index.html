@@ -1052,12 +1052,24 @@
 
     async function loadLeaderboard(gamemode) {
       try {
-        const { data, error } = await supabaseClient
+        // 10x/30x always end with the same fixed score (10 or 30) once
+        // completed, so "fastest time wins" — rank by time_taken_ms
+        // ascending. The 1-minute mode has a variable score, so rank by
+        // score descending, using avg answer time as a tiebreaker.
+        let query = supabaseClient
           .from('scores')
-          .select('score, avg_time_per_answer_ms, users(username)')
-          .eq('gamemode', gamemode)
-          .order('score', { ascending: false })
-          .limit(30);
+          .select('score, avg_time_per_answer_ms, time_taken_ms, users(username)')
+          .eq('gamemode', gamemode);
+
+        if (gamemode === '1min') {
+          query = query
+            .order('score', { ascending: false })
+            .order('avg_time_per_answer_ms', { ascending: true });
+        } else {
+          query = query.order('time_taken_ms', { ascending: true });
+        }
+
+        const { data, error } = await query.limit(100);
 
         if (error) throw error;
 
@@ -1075,32 +1087,40 @@
 
         const seen = {};
         let rank = 0;
-        data.forEach((row, index) => {
+        let shown = 0;
+        for (const row of data) {
           const username = row.users?.username || 'Player';
-          const key = username + ':' + row.score;
-          
-          if (!seen[key]) {
-            rank++;
-            seen[key] = true;
 
-            const li = document.createElement('li');
-            li.className = 'leaderboard-item';
-            
-            let rankClass = '';
-            if (rank === 1) rankClass = ' gold';
-            else if (rank === 2) rankClass = ' silver';
-            else if (rank === 3) rankClass = ' bronze';
+          // One row per user: since results are already sorted best-first,
+          // the first row we see for a user IS their personal best.
+          if (seen[username]) continue;
+          seen[username] = true;
+          rank++;
+          shown++;
 
-            li.innerHTML = `
-              <div class="leaderboard-rank${rankClass}">${rank}</div>
-              <div class="leaderboard-info">
-                <div class="leaderboard-name">${username}</div>
-                <div class="leaderboard-stats">Score: ${row.score} | Avg: ${row.avg_time_per_answer_ms.toFixed(1)}ms</div>
-              </div>
-            `;
-            list.appendChild(li);
-          }
-        });
+          const li = document.createElement('li');
+          li.className = 'leaderboard-item';
+
+          let rankClass = '';
+          if (rank === 1) rankClass = ' gold';
+          else if (rank === 2) rankClass = ' silver';
+          else if (rank === 3) rankClass = ' bronze';
+
+          const statsText = gamemode === '1min'
+            ? `Correct: ${row.score} | Avg: ${row.avg_time_per_answer_ms.toFixed(1)}ms`
+            : `Time: ${(row.time_taken_ms / 1000).toFixed(3)}s`;
+
+          li.innerHTML = `
+            <div class="leaderboard-rank${rankClass}">${rank}</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name">${username}</div>
+              <div class="leaderboard-stats">${statsText}</div>
+            </div>
+          `;
+          list.appendChild(li);
+
+          if (shown >= 30) break;
+        }
       } catch (err) {
         console.error('Failed to load leaderboard:', err);
         const listId = 'leaderboardList' + gamemode;
