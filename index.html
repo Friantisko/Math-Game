@@ -609,10 +609,6 @@
             <div class="stat-label">Correct</div>
             <div class="stat-value" id="correctCount">0</div>
           </div>
-          <div class="stat">
-            <div class="stat-label">Avg Speed</div>
-            <div class="stat-value" id="avgSpeed">-</div>
-          </div>
         </div>
 
         <div id="currentQuestion">5 × 7 = ?</div>
@@ -886,11 +882,12 @@
       // Fix: Space bar always wipes the box instead of typing a space.
       answerInput.addEventListener('keydown', handleAnswerKeydown);
 
-      // Timer
+      // Progress indicator: countdown for 1-minute mode, questions-left
+      // for the 10/30 modes. No elapsed "time passed" is shown during play.
       if (currentGamemode === '1min') {
         startTimer();
       } else {
-        updateTimer();
+        updateProgressDisplay();
       }
     }
 
@@ -911,11 +908,20 @@
       document.getElementById('nextQuestion').textContent = 
         `${gameState.nextNum1} × ${gameState.nextNum2}`;
       document.getElementById('correctCount').textContent = gameState.correctAnswers;
-      
-      if (gameState.answeredQuestions.length > 0) {
-        const avgSpeed = gameState.answeredQuestions.reduce((a, b) => a + b, 0) / gameState.answeredQuestions.length;
-        document.getElementById('avgSpeed').textContent = avgSpeed.toFixed(0) + 'ms';
-      }
+      updateProgressDisplay();
+    }
+
+    // Shows "questions left" for the 10/30 modes instead of a running
+    // stopwatch. The 1-minute mode keeps its own countdown (set by
+    // startTimer's interval) and is left alone here.
+    const GAMEMODE_TOTAL_QUESTIONS = { '10': 10, '30': 30 };
+
+    function updateProgressDisplay() {
+      if (currentGamemode === '1min') return;
+      const total = GAMEMODE_TOTAL_QUESTIONS[currentGamemode];
+      const left = total - gameState.correctAnswers;
+      document.getElementById('timer').textContent =
+        `${left} question${left === 1 ? '' : 's'} left`;
     }
 
     // Space bar clears the answer box instead of inserting a space.
@@ -973,21 +979,12 @@
       timerInterval = setInterval(() => {
         const elapsed = (Date.now() - gameStartTime) / 1000;
         const remaining = Math.max(0, 60 - elapsed);
-        document.getElementById('timer').textContent = remaining.toFixed(1) + 's';
+        document.getElementById('timer').textContent = remaining.toFixed(1) + 's left';
 
         if (remaining <= 0) {
           endGame();
         }
       }, 10);
-    }
-
-    function updateTimer() {
-      const elapsed = (performance.now() - gameState.startTime) / 1000;
-      document.getElementById('timer').textContent = elapsed.toFixed(3) + 's';
-      
-      if (gameState.isRunning) {
-        requestAnimationFrame(updateTimer);
-      }
     }
 
     // ===== GAME END =====
@@ -1030,7 +1027,8 @@
 
     function backToMenu() {
       document.getElementById('gameOverModal').classList.remove('show');
-      logout();
+      showGamemodeSection();
+      loadAllLeaderboards();
     }
 
     // ===== LEADERBOARD =====
